@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111c">
+<title>Trucker Find</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#07111c;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{overscroll-behavior:none}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:430px;margin:auto;min-height:100vh;background:#07111c;padding-bottom:82px}
+header{padding:18px}
+.head{display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:24px;font-weight:900}.blue{color:#18a0ff}
+.tag{color:#9db0c0;font-size:12px;margin-top:3px}
+.avatar{width:42px;height:42px;border-radius:50%;background:#12283a;border:0;color:#fff;font-size:20px;overflow:hidden;padding:0}.avatar img{width:100%;height:100%;object-fit:cover}
+.search{margin:0 18px 10px;background:#fff;border-radius:15px;height:50px;display:flex;align-items:center;padding:0 13px;color:#687b8c;gap:7px}
+.search input{border:0;outline:0;flex:1;font-size:14px;min-width:0}
+.go{color:#078bea;font-weight:900;cursor:pointer}
+.route{margin:0 18px 10px;display:flex;gap:8px}
+.route input{flex:1;min-width:0;background:#0c1d2c;border:1px solid #203a50;border-radius:12px;padding:11px;color:#fff;outline:none}
+.route button{background:#168fe8;color:#fff;border:0;border-radius:12px;padding:0 14px;font-weight:900}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px}
+.cat{background:#0d1e2c;border:0;color:#fff;border-radius:15px;padding:13px 5px;font-weight:800;font-size:11px;min-height:70px}
+.cat.active{background:#127fca}
+.ico{display:block;font-size:25px;margin-bottom:5px}
+.saved{margin:15px;padding:13px;border-radius:14px;background:#10273a;border:1px solid #21425b;display:flex;align-items:center;gap:10px;cursor:pointer}
+.saved b{display:block}.saved small{color:#8298aa}
+.chev{margin-left:auto;color:#52b5ff;font-size:25px}
+.map{height:235px;background:#172b39;position:relative;overflow:hidden}
+.map:before{content:"";position:absolute;inset:-40px;background:repeating-linear-gradient(35deg,transparent 0 44px,#263f4d 45px 48px),repeating-linear-gradient(120deg,transparent 0 68px,#203846 69px 72px)}
+.route-line{position:absolute;left:8%;top:76%;width:85%;height:4px;background:#2da9ff;transform:rotate(-22deg);box-shadow:0 0 7px #2da9ff}
+.pin{position:absolute;background:#18a0ff;border:3px solid white;border-radius:50%;width:17px;height:17px}
+.p1{left:25%;top:50%}.p2{left:62%;top:31%}.p3{left:77%;top:68%}
+.you{position:absolute;left:48%;top:55%;width:18px;height:18px;background:#4285f4;border:3px solid white;border-radius:50%}
+.map-note{position:absolute;left:12px;bottom:10px;background:#08131dcc;padding:7px 10px;border-radius:9px;font-size:10px;color:#cfe5f3}
+.section{padding:15px;display:flex;justify-content:space-between;align-items:center}
+.section h2{font-size:17px;margin:0}.section small{color:#7f93a5}
+.card{margin:0 18px 10px;padding:14px;border-radius:16px;border:1px solid #1c3142;background:#0d1d2b}
+.top{display:flex}.name{font-size:15px;font-weight:900}.addr{color:#8fa3b3;font-size:11px;margin-top:3px}
+.rating{color:#ffd166;font-size:12px;font-weight:800;margin-top:6px}
+.distance{margin-left:auto;color:#9bd8ff;font-weight:800;font-size:12px}
+.pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.pill{background:#172f43;padding:5px 8px;border-radius:8px;color:#cfe5f3;font-size:9px;font-weight:900}
+.actions{display:flex;gap:6px;margin-top:12px}
+.actions button{flex:1;border:0;border-radius:10px;padding:10px;color:#fff;font-size:9px;font-weight:900;background:#152a3b}
+.actions .save{background:#31506a}.actions .report{background:#0c6eae}
+.updated{color:#687e8f;font-size:9px;margin-top:8px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:70px;background:#08131f;border-top:1px solid #1a3042;display:flex;justify-content:space-around;align-items:center;z-index:20}
+nav span{color:#8397a8;font-size:11px;font-weight:800;cursor:pointer;padding:15px 10px}
+nav .active{color:#20a3ff}
+.modal{display:none;position:fixed;inset:0;background:#000b;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{width:min(430px,100%);background:#0b1b29;border-radius:25px 25px 0 0;padding:20px 20px 30px;border:1px solid #20394e}
+.sheet h2{margin:0 0 4px}.hint{color:#8fa5b6;font-size:11px;line-height:16px;margin:12px 0}
+.primary,.close{width:100%;padding:14px;border:0;border-radius:11px;font-weight:900}
+.primary{background:#168fe8;color:#fff}.close{margin-top:12px;background:#172b3c;color:#fff}
+.saved-list{max-height:360px;overflow:auto}.saved-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #193044}
+.saved-row .grow{flex:1}.saved-row small{color:#8fa3b3}.go2,.del{background:none;border:0;font-weight:900}
+.go2{color:#2da9ff}.del{color:#ff7180}
+.toast{position:fixed;left:50%;bottom:82px;transform:translateX(-50%);background:#fff;color:#07111c;padding:10px 14px;border-radius:10px;font-weight:800;font-size:12px;display:none;z-index:80;box-shadow:0 5px 25px #0008}
+@media(min-width:700px){body{padding:25px 0}.app{border-radius:24px;box-shadow:0 15px 60px #0008}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="head">
+<div><div class="brand">📍 TRUCKER <span class="blue">FIND</span></div><div class="tag">Everything you need. Right where you are.</div></div>
+<button class="avatar" id="profileBtn" aria-label="Profile">👤</button>
+</div></header>
+
+<div class="search">⌕ <input id="searchInput" placeholder="Search truck stops, repair, DEF..."><b class="go" id="searchBtn">GO</b></div>
+<div class="route"><input id="destinationInput" placeholder="Optional destination"><button id="routeBtn">ROUTE</button></div>
+
+<div class="grid">
+<button class="cat active" data-search="fuel stations"><span class="ico">⛽</span>Fuel</button>
+<button class="cat" data-search="truck repair"><span class="ico">🔧</span>Repair</button>
+<button class="cat" data-search="truck stop food"><span class="ico">🍔</span>Food</button>
+<button class="cat" data-search="truck driver hotels"><span class="ico">🛏️</span>Hotel</button>
+<button class="cat" data-search="laundromat"><span class="ico">🧺</span>Laundry</button>
+<button class="cat" data-search="truck wash"><span class="ico">🚿</span>Truck Wash</button>
+<button class="cat" data-search="24 hour truck stop"><span class="ico">🏪</span>24/7</button>
+<button class="cat" data-search="truck parking"><span class="ico">🅿️</span>Parking</button>
+<button class="cat" data-search="truck chrome shop"><span class="ico">🚛</span>Chrome</button>
+</div>
+
+<div class="saved" id="savedBtn">🔖<div><b>Saved Areas</b><small id="savedSub">No saved locations yet</small></div><span class="chev">›</span></div>
+
+<div class="map">
+<div class="route-line"></div><i class="pin p1"></i><i class="pin p2"></i><i class="pin p3"></i><i class="you"></i>
+<div class="map-note">Tap a category or search to open Google Maps</div>
+</div>
+
+<div class="section"><h2 id="sectionTitle">3 places near you</h2><small>External Google Maps</small></div>
+
+<div id="cards">
+<div class="card" data-name="Pilot Travel Center">
+<div class="top"><div><div class="name">Pilot Travel Center</div><div class="addr">123 Highway Rd • 2.4 mi</div><div class="rating">★ 4.2 <span style="color:#7e91a2">(1,842)</span></div></div><div class="distance">2.4 mi</div></div>
+<div class="pills"><span class="pill">OPEN NOW</span><span class="pill">DIESEL</span><span class="pill">DEF</span><span class="pill">SHOWERS</span><span class="pill">14′ CLEARANCE</span><span class="pill">DIESEL $3.49</span><span class="pill">17 PARKING</span></div>
+<div class="actions"><button class="directions">➤ DIRECTIONS</button><button class="save">🔖 SAVE</button><button class="report">📢 REPORT</button></div>
+<div class="updated">Example place — open Google Maps for current information</div>
+</div>
+
+<div class="card" data-name="Love's Travel Stop">
+<div class="top"><div><div class="name">Love's Travel Stop</div><div class="addr">890 Interstate Dr • 5.8 mi</div><div class="rating">★ 4.0 <span style="color:#7e91a2">(2,103)</span></div></div><div class="distance">5.8 mi</div></div>
+<div class="pills"><span class="pill">OPEN NOW</span><span class="pill">DIESEL</span><span class="pill">DEF</span><span class="pill">WASH OPEN</span></div>
+<div class="actions"><button class="directions">➤ DIRECTIONS</button><button class="save">🔖 SAVE</button><button class="report">📢 REPORT</button></div>
+</div>
+</div>
+
+<nav><span class="active" id="homeNav">⌂ Home</span><span id="nearbyNav">◉ Nearby</span><span id="savedNav">🔖 Saved</span><span id="profileNav">👤 Profile</span></nav>
+</div>
+
+<div id="profile" class="modal"><div class="sheet">
+<h2>Driver Profile</h2>
+<p class="hint">Create a local account on this device. Your name, email, and photo stay in this browser unless you choose to connect a real account service later.</p>
+<div style="text-align:center;margin:15px 0">
+  <div id="profilePhotoPreview" style="width:86px;height:86px;margin:auto;border-radius:50%;background:#12283a;border:2px solid #31506a;display:flex;align-items:center;justify-content:center;font-size:38px;overflow:hidden">👤</div>
+</div>
+<label style="display:block;color:#9db0c0;font-size:11px;font-weight:800;margin:10px 0 5px">PROFILE PHOTO</label>
+<input id="photoInput" type="file" accept="image/*" style="width:100%;color:#cfe5f3;font-size:12px">
+<label style="display:block;color:#9db0c0;font-size:11px;font-weight:800;margin:12px 0 5px">DRIVER NAME</label>
+<input id="nameInput" placeholder="Your name" style="width:100%;background:#0c1d2c;border:1px solid #203a50;border-radius:11px;padding:12px;color:#fff;outline:none">
+<label style="display:block;color:#9db0c0;font-size:11px;font-weight:800;margin:12px 0 5px">EMAIL</label>
+<input id="emailInput" type="email" placeholder="you@example.com" style="width:100%;background:#0c1d2c;border:1px solid #203a50;border-radius:11px;padding:12px;color:#fff;outline:none">
+<button class="primary" id="saveProfileBtn" style="margin-top:15px">SAVE LOCAL ACCOUNT</button>
+<button class="close" data-close="profile">CLOSE</button>
+</div></div>
+
+<div id="saved" class="modal"><div class="sheet">
+<h2>Saved Areas</h2><p class="hint">Saved locations stay on this device using local storage.</p>
+<div id="savedList" class="saved-list"></div>
+<button class="close" data-close="saved">CLOSE</button>
+</div></div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+var saves=[];
+var profile={name:"",email:"",photo:""};
+
+try {
+  saves=JSON.parse(localStorage.getItem("truckerFindSaves")||"[]");
+  profile=JSON.parse(localStorage.getItem("truckerFindProfile")||'{"name":"","email":"","photo":""}');
+} catch(e){}
+
+function $(id){return document.getElementById(id);}
+function showModal(id){$(id).style.display="flex";}
+function closeModal(id){$(id).style.display="none";}
+
+function toast(message){
+  var t=$("toast"); t.textContent=message; t.style.display="block";
+  clearTimeout(window._toastTimer);
+  window._toastTimer=setTimeout(function(){t.style.display="none";},2200);
+}
+
+function saveData(){
+  try{localStorage.setItem("truckerFindSaves",JSON.stringify(saves));}catch(e){}
+  updateSavedText();
+}
+
+function updateSavedText(){
+  $("savedSub").textContent=saves.length?saves.length+" saved locations":"No saved locations yet";
+}
+
+function saveProfile(){
+  var name=$("nameInput").value.trim();
+  var email=$("emailInput").value.trim();
+
+  if(!name){toast("Enter your name");return;}
+  if(!email || !email.includes("@")){toast("Enter a valid email");return;}
+
+  profile.name=name;
+  profile.email=email;
+
+  try{localStorage.setItem("truckerFindProfile",JSON.stringify(profile));}
+  catch(e){toast("Could not save profile");return;}
+
+  updateProfileButton();
+  toast("Local account saved");
+}
+
+function updateProfileButton(){
+  var btn=$("profileBtn");
+  if(profile.photo){
+    btn.innerHTML='<img src="'+profile.photo+'" alt="Profile">';
+  }else{
+    btn.textContent="👤";
+  }
+}
+
+function loadProfileForm(){
+  $("nameInput").value=profile.name||"";
+  $("emailInput").value=profile.email||"";
+  if(profile.photo){
+    $("profilePhotoPreview").innerHTML='<img src="'+profile.photo+'" style="width:100%;height:100%;object-fit:cover" alt="Profile photo">';
+  }else{
+    $("profilePhotoPreview").textContent="👤";
+  }
+}
+
+function openMapsSearch(query){
+  query=String(query||"").trim();
+  if(!query)return;
+  window.location.href="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(query);
+}
+
+function openDirections(destination){
+  destination=String(destination||"").trim();
+  if(!destination){toast("Enter a destination first");return;}
+  window.location.href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination);
+}
+
+function doSearch(){
+  var q=$("searchInput").value.trim();
+  if(!q){toast("Enter something to search");return;}
+  openMapsSearch(q+" near me");
+}
+
+function doRoute(){openDirections($("destinationInput").value);}
+
+function renderSaved(){
+  var box=$("savedList");
+  if(!saves.length){
+    box.innerHTML='<div class="hint">No saved areas yet. Tap 🔖 SAVE on a place.</div>';
+    return;
+  }
+  box.innerHTML="";
+  saves.forEach(function(name,index){
+    var row=document.createElement("div");row.className="saved-row";
+    var grow=document.createElement("div");grow.className="grow";
+    var b=document.createElement("b");b.textContent=name;
+    var small=document.createElement("small");small.textContent="Saved area";
+    grow.appendChild(b);grow.appendChild(document.createElement("br"));grow.appendChild(small);
+    var go=document.createElement("button");go.className="go2";go.textContent="GO";
+    go.addEventListener("click",function(){openMapsSearch(name);});
+    var del=document.createElement("button");del.className="del";del.textContent="✕";
+    del.addEventListener("click",function(){saves.splice(index,1);saveData();renderSaved();});
+    row.appendChild(grow);row.appendChild(go);row.appendChild(del);box.appendChild(row);
+  });
+}
+
+function addSave(name){
+  if(saves.indexOf(name)===-1){saves.push(name);saveData();toast(name+" saved");}
+  else toast("Already saved");
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  updateSavedText();
+  updateProfileButton();
+
+  $("searchBtn").addEventListener("click",doSearch);
+  $("searchInput").addEventListener("keydown",function(e){if(e.key==="Enter")doSearch();});
+  $("routeBtn").addEventListener("click",doRoute);
+  $("destinationInput").addEventListener("keydown",function(e){if(e.key==="Enter")doRoute();});
+
+  document.querySelectorAll(".cat").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      document.querySelectorAll(".cat").forEach(function(b){b.classList.remove("active");});
+      btn.classList.add("active");
+      openMapsSearch(btn.getAttribute("data-search")+" near me");
+    });
+  });
+
+  document.querySelectorAll(".card").forEach(function(card){
+    var name=card.getAttribute("data-name");
+    card.querySelector(".directions").addEventListener("click",function(){openDirections(name);});
+    card.querySelector(".save").addEventListener("click",function(){addSave(name);});
+    card.querySelector(".report").addEventListener("click",function(){
+      window.location.href="mailto:?subject="+encodeURIComponent("Trucker Find driver report")+
+        "&body="+encodeURIComponent("Place: "+name+"\n\nReport: ");
+    });
+  });
+
+  $("profileBtn").addEventListener("click",function(){showModal("profile");loadProfileForm();});
+  $("profileNav").addEventListener("click",function(){showModal("profile");loadProfileForm();});
+
+  $("photoInput").addEventListener("change",function(){
+    var file=this.files&&this.files[0];
+    if(!file)return;
+    if(file.size>4*1024*1024){toast("Photo must be under 4 MB");this.value="";return;}
+    var reader=new FileReader();
+    reader.onload=function(){
+      profile.photo=reader.result;
+      $("profilePhotoPreview").innerHTML='<img src="'+profile.photo+'" style="width:100%;height:100%;object-fit:cover" alt="Profile photo">';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("saveProfileBtn").addEventListener("click",saveProfile);
+
+  $("savedBtn").addEventListener("click",function(){showModal("saved");renderSaved();});
+  $("savedNav").addEventListener("click",function(){showModal("saved");renderSaved();});
+  $("nearbyNav").addEventListener("click",function(){openMapsSearch("truck stops near me");});
+  $("homeNav").addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});
+
+  document.querySelectorAll("[data-close]").forEach(function(btn){
+    btn.addEventListener("click",function(){closeModal(btn.getAttribute("data-close"));});
+  });
+
+  document.querySelectorAll(".modal").forEach(function(modal){
+    modal.addEventListener("click",function(e){if(e.target===modal)modal.style.display="none";});
+  });
+});
+})();
+</script>
+</body>
+</html>
