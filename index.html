@@ -31,6 +31,8 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
 @media(min-width:700px){body{padding:25px 0}.app{border-radius:24px;box-shadow:0 15px 60px #0008}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="auth.css">
+<script src="auth.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
@@ -69,7 +71,7 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
 <nav><span class="active">⌂ Home</span><span onclick="requestLocation()">◉ Nearby</span><span onclick="openSaved()">🔖 Saved</span><span onclick="openProfile()">👤 Profile</span></nav>
 </div>
 
-<div id="profile" class="modal"><div class="sheet"><h2>Driver Profile</h2><p class="hint">Sign in with your Trucker Find email account to sync your profile and saved locations across devices.</p><button class="google" onclick="signIn()">G&nbsp;&nbsp; SIGN IN / CREATE ACCOUNT</button><button class="close" onclick="closeModal('profile')">CLOSE</button></div></div>
+<div id="profile" class="modal"><div class="sheet"><h2>Driver Profile</h2><p class="hint">Sign in with your Trucker Find email account to sync your profile and saved locations across devices.</p><button class="google" onclick="signIn()">SIGN IN / CREATE ACCOUNT</button><button class="close" onclick="closeModal('profile')">CLOSE</button></div></div>
 <div id="saved" class="modal"><div class="sheet saved-sheet"><h2>Saved Areas</h2><p class="hint" id="savedHint">Your saved truck stops and areas will appear here.</p>
 <button class="add-saved" type="button" onclick="showAddSaved()">＋ ADD SAVED AREA</button>
 <div id="savedForm" class="saved-form">
@@ -82,10 +84,31 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
 <div id="savedList" class="saved-list"></div><button class="close" onclick="closeModal('saved')">CLOSE</button></div></div>
 
 
+
+<dialog id="authDialog" class="auth-dialog" aria-labelledby="authTitle">
+  <h2 id="authTitle">Sign in</h2>
+  <form id="authForm">
+    <label id="authNameRow" hidden>Driver name<input id="authName" type="text" autocomplete="name" maxlength="100"></label>
+    <label id="authEmailRow">Email address<input id="authEmail" type="email" autocomplete="email" required maxlength="254"></label>
+    <label id="authPasswordRow">Password<input id="authPassword" type="password" autocomplete="current-password" required></label>
+    <label id="authConfirmRow" hidden>Confirm password<input id="authConfirm" type="password" autocomplete="new-password"></label>
+    <p id="authStatus" role="status" aria-live="polite"></p>
+    <button id="authSubmit" class="auth-primary" type="submit">SIGN IN</button>
+  </form>
+  <div class="auth-links">
+    <button type="button" data-auth-mode="signin">Sign in</button>
+    <button type="button" data-auth-mode="signup">Create account</button>
+    <button type="button" data-auth-mode="forgot">Forgot password?</button>
+    <button type="button" data-auth-mode="resend">Resend confirmation</button>
+  </div>
+  <button id="authClose" class="close" type="button">CLOSE</button>
+</dialog>
+
 <script>
 const SUPABASE_URL='https://yczisrgpeffbocpkwlxl.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_nPKhRw-H8yug3q6ANSOBJA_paYR7ghD';
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+TruckerAuth.init(supabaseClient, async()=>{await loadCloudData();refreshProfileModal();});
 
 let currentUser=null;
 let profile={name:'',email:'',photo_url:''};
@@ -210,48 +233,9 @@ async function loadCloudData(){
   updateSavedSub();
 }
 
-async function signIn(){
-  const email=prompt('Email address');
-  if(email===null)return;
-
-  const password=prompt('Password');
-  if(password===null)return;
-
-  if(password.length<6){
-    alert('Password must be at least 6 characters.');
-    return;
-  }
-
-  let result=await supabaseClient.auth.signInWithPassword({
-    email:email.trim(),
-    password
-  });
-
-  if(result.error){
-    const create=confirm('Login failed. Create a new Trucker Find account with this email?');
-    if(!create)return;
-
-    const name=prompt('Driver name')||'';
-
-    result=await supabaseClient.auth.signUp({
-      email:email.trim(),
-      password,
-      options:{data:{name:name.trim()}}
-    });
-
-    if(result.error){
-      alert(result.error.message);
-      return;
-    }
-
-    if(!result.data.session){
-      alert('Account created. Check your email to confirm your account, then sign in.');
-      return;
-    }
-  }
-
-  await loadCloudData();
-  refreshProfileModal();
+function signIn(){
+  closeModal('profile');
+  TruckerAuth.show('signin');
 }
 
 async function signOut(){
@@ -296,7 +280,10 @@ function refreshProfileModal(){
       <button class="close" type="button" onclick="saveProfile()">SAVE PROFILE</button>
       <button class="close" type="button" onclick="signOut()">SIGN OUT</button>
     `:`
-      <button class="google" type="button" onclick="signIn()">SIGN IN / CREATE ACCOUNT</button>
+      <button class="google" type="button" onclick="signIn()">SIGN IN</button>
+      <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('signup')">CREATE ACCOUNT</button>
+      <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('forgot')">FORGOT PASSWORD?</button>
+      <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('resend')">RESEND CONFIRMATION EMAIL</button>
     `}
     <button class="close" type="button" onclick="closeModal('profile')">CLOSE</button>
   `;
@@ -496,7 +483,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
   // Fix the existing modal to use the new profile UI.
   await loadCloudData();
-  supabaseClient.auth.onAuthStateChange(()=>loadCloudData());
+
 });
 </script>
 
