@@ -1,5 +1,5 @@
-const CACHE='trucker-find-account-v5';
-const FILES=['./','./index.html','./auth.js?v=3','./auth.css','./delete-account.js?v=1','./manifest.webmanifest'];
+const CACHE='trucker-find-logo-v6';
+const FILES=['./','./index.html','./auth.js?v=3','./auth.css','./delete-account.js?v=1','./manifest.webmanifest','./icons/trucker-find-192.png','./icons/trucker-find-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('trucker-find-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
