@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trucker Find — Current Build Preview</title>
+<title>Trucker Find</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#07111c;color:#fff;font-family:Arial,Helvetica,sans-serif}
 .app{max-width:430px;margin:auto;min-height:100vh;background:#07111c;padding-bottom:82px}
@@ -71,6 +71,7 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
 </span>Weigh Stations</button>
 </div>
 <div class="saved" onclick="openSaved()">🔖<div><b>Saved Areas</b><small id="savedSub">Sign in to save favorite areas</small></div><span class="chev">›</span></div>
+<p style="text-align:center;font-size:12px;margin:12px 18px 24px"><a style="color:#72c9ff" href="privacy.html">Privacy Policy</a> · <a style="color:#72c9ff" href="delete-account.html">Account deletion</a> · <a style="color:#72c9ff" href="mailto:littlefishdevolpment@gmail.com">Support</a></p>
 <nav><span class="active">⌂ Home</span><span onclick="requestLocation()">◉ Nearby</span><span onclick="openSaved()">🔖 Saved</span><span onclick="openProfile()">👤 Profile</span></nav>
 </div>
 
@@ -102,6 +103,7 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
     <button type="button" data-auth-mode="signin">Sign in</button>
     <button type="button" data-auth-mode="signup">Create account</button>
   </div>
+  <p style="font-size:12px;text-align:center"><a style="color:#72c9ff" href="privacy.html">Privacy Policy</a></p>
   <button id="authClose" class="close" type="button">CLOSE</button>
 </dialog>
 
