@@ -19,23 +19,13 @@ function setup(options={}) {
  const flush=async()=>{while(timers.length)await timers.shift()();await Promise.resolve();};
  return {api:window.TruckerAuth,get,calls,flush,emit:async(event,session)=>{callback(event,session);await flush();},submit:()=>window.TruckerAuth.submit({preventDefault(){}})};
 }
-test('signup sends confirmation redirect and never exposes password in feedback',async()=>{
- const t=setup();t.api.show('signup');t.get('authEmail').value='driver@example.com';t.get('authPassword').value=t.get('authConfirm').value='test-password';await t.submit();
- assert.equal(t.calls[0][0],'signup');assert.equal(t.calls[0][1].options.emailRedirectTo,'https://truckerfindapp.github.io/Trucker-Find--web/?auth=confirmed');assert.match(t.get('authStatus').textContent,/Check your email/);assert.equal(t.get('authPassword').value,'');
+
+test('signup signs in immediately without email redirect',async()=>{
+ const t=setup({response:{data:{session:{user:{id:'u1'}}},error:null}});t.api.show('signup');t.get('authEmail').value='driver@example.com';t.get('authPassword').value=t.get('authConfirm').value='test-password';await t.submit();
+ assert.equal(t.calls[0][0],'signup');assert.equal(t.calls[0][1].options.emailRedirectTo,undefined);assert.match(t.get('authStatus').textContent,/signed in/);assert.equal(t.get('authPassword').value,'');
 });
-test('forgot password sends recovery URL and uses non-enumerating feedback',async()=>{
- const t=setup();t.api.show('forgot');t.get('authEmail').value='driver@example.com';await t.submit();assert.equal(t.calls[0][0],'reset');assert.match(t.calls[0][2].redirectTo,/auth=recovery$/);assert.match(t.get('authStatus').textContent,/If an account exists/);
-});
-test('resend targets signup confirmation',async()=>{const t=setup();t.api.show('resend');await t.submit();assert.equal(t.calls[0][1].type,'signup');});
 test('mismatched passwords never call authentication API',async()=>{const t=setup();t.api.show('signup');t.get('authPassword').value='new-pass';t.get('authConfirm').value='different';await t.submit();assert.equal(t.calls.length,0);});
-test('direct update view cannot change password without recovery event',async()=>{const t=setup();t.api.show('update');await t.submit();assert.ok(!t.calls.some(x=>x[0]==='update'));assert.equal(t.get('authSubmit').disabled,true);});
-test('recovery received before initial session remains in password screen',async()=>{
- const t=setup({hash:'#type=recovery',search:'?auth=recovery'});await t.emit('PASSWORD_RECOVERY',{user:{id:'u1'}});await t.emit('INITIAL_SESSION',{user:{id:'u1'}});assert.equal(t.get('authTitle').textContent,'Choose a new password');
- t.get('authPassword').value=t.get('authConfirm').value='new-password';await t.submit();assert.ok(t.calls.some(x=>x[0]==='update'));assert.match(t.get('authStatus').textContent,/Password updated/);
-});
-test('recovery cannot update a different signed-in account',async()=>{const t=setup({currentUser:'u2'});await t.emit('PASSWORD_RECOVERY',{user:{id:'u1'}});t.get('authPassword').value=t.get('authConfirm').value='new-password';await t.submit();assert.ok(!t.calls.some(x=>x[0]==='update'));assert.match(t.get('authStatus').textContent,/no longer valid/);});
-test('expired recovery link opens request-new-link flow',async()=>{const t=setup({hash:'#error=access_denied&error_code=otp_expired',search:'?auth=recovery'});await t.emit('INITIAL_SESSION',null);assert.equal(t.get('authTitle').textContent,'Forgot password');assert.match(t.get('authStatus').textContent,/expired/);});
-test('expired confirmation offers resend rather than password reset',async()=>{const t=setup({hash:'#error=access_denied',search:'?auth=confirmed'});await t.emit('INITIAL_SESSION',null);assert.equal(t.get('authTitle').textContent,'Resend confirmation');});
-test('failed sign-in never creates an account',async()=>{const t=setup({response:{error:{code:'invalid_credentials'}}});t.api.show('signin');await t.submit();assert.equal(t.calls[0][0],'signin');assert.ok(!t.calls.some(x=>x[0]==='signup'));assert.match(t.get('authStatus').textContent,/incorrect/);});
-test('unconfirmed email explains confirmation requirement',async()=>{const t=setup({response:{error:{code:'email_not_confirmed'}}});t.api.show('signin');await t.submit();assert.match(t.get('authStatus').textContent,/Confirm your email/);});
-test('email-send failure is shown instead of false success',async()=>{const t=setup({response:{error:{message:'Email service unavailable'}}});t.api.show('forgot');await t.submit();assert.equal(t.get('authStatus').textContent,'Email service unavailable');});
+test('failed sign-in never creates an account or offers email reset',async()=>{const t=setup({response:{error:{code:'invalid_credentials'}}});t.api.show('signin');await t.submit();assert.equal(t.calls[0][0],'signin');assert.equal(t.calls.length,1);assert.match(t.get('authStatus').textContent,/incorrect/);assert.doesNotMatch(t.get('authStatus').textContent,/forgot|reset/i);});
+test('retired email modes fall back to password sign-in',async()=>{for(const mode of ['forgot','resend','update']){const t=setup();t.api.show(mode);assert.equal(t.get('authTitle').textContent,'Sign in');await t.submit();assert.equal(t.calls[0][0],'signin');}});
+test('missing signup session does not claim success or ask for email',async()=>{const t=setup();t.api.show('signup');await t.submit();assert.match(t.get('authStatus').textContent,/Unable to finish/);assert.doesNotMatch(t.get('authStatus').textContent,/Check your email|Account created/);});
+test('sign-in success closes dialog and clears password',async()=>{const t=setup();t.api.show();t.get('authPassword').value='test-password';await t.submit();assert.equal(t.get('authDialog').open,false);assert.equal(t.get('authPassword').value,'');});

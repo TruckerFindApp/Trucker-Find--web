@@ -98,8 +98,6 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
   <div class="auth-links">
     <button type="button" data-auth-mode="signin">Sign in</button>
     <button type="button" data-auth-mode="signup">Create account</button>
-    <button type="button" data-auth-mode="forgot">Forgot password?</button>
-    <button type="button" data-auth-mode="resend">Resend confirmation</button>
   </div>
   <button id="authClose" class="close" type="button">CLOSE</button>
 </dialog>
@@ -282,8 +280,6 @@ function refreshProfileModal(){
     `:`
       <button class="google" type="button" onclick="signIn()">SIGN IN</button>
       <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('signup')">CREATE ACCOUNT</button>
-      <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('forgot')">FORGOT PASSWORD?</button>
-      <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('resend')">RESEND CONFIRMATION EMAIL</button>
     `}
     <button class="close" type="button" onclick="closeModal('profile')">CLOSE</button>
   `;
