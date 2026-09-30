@@ -33,6 +33,7 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="auth.css">
 <script src="auth.js?v=3"></script>
+<script src="delete-account.js?v=1"></script>
 <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
@@ -102,11 +103,24 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,
   <button id="authClose" class="close" type="button">CLOSE</button>
 </dialog>
 
+<dialog id="deleteDialog" class="auth-dialog" aria-labelledby="deleteTitle">
+  <h2 id="deleteTitle">Delete account permanently?</h2>
+  <p>This deletes your account, driver profile, profile photo, and every Saved Area. This cannot be undone.</p>
+  <p id="deleteEmail"></p>
+  <form id="deleteForm">
+    <label>Current password<input id="deletePassword" type="password" autocomplete="current-password" required></label>
+    <label>Type DELETE to confirm<input id="deleteConfirm" type="text" autocomplete="off" pattern="DELETE" required></label>
+    <p id="deleteStatus" role="status" aria-live="polite"></p>
+    <button id="deleteSubmit" class="auth-primary" style="background:#b32632" type="submit">DELETE MY ACCOUNT PERMANENTLY</button>
+  </form>
+  <button id="deleteCancel" class="close" type="button">CANCEL</button>
+</dialog>
 <script>
 const SUPABASE_URL='https://yczisrgpeffbocpkwlxl.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_nPKhRw-H8yug3q6ANSOBJA_paYR7ghD';
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 TruckerAuth.init(supabaseClient, async()=>{await loadCloudData();refreshProfileModal();});
+TruckerDelete.init(supabaseClient,async()=>{currentUser=null;profile={name:'',email:'',photo_url:''};saves=[];refreshProfileUI();renderSaved();updateSavedSub();refreshProfileModal();closeModal('profile');alert('Your account and saved data have been deleted.');});
 
 let currentUser=null;
 let profile={name:'',email:'',photo_url:''};
@@ -277,6 +291,7 @@ function refreshProfileModal(){
         style="width:100%;margin:6px 0 10px">
       <button class="close" type="button" onclick="saveProfile()">SAVE PROFILE</button>
       <button class="close" type="button" onclick="signOut()">SIGN OUT</button>
+      <button class="close" style="color:#ffadb6" type="button" onclick="closeModal('profile');TruckerDelete.show()">DELETE ACCOUNT</button>
     `:`
       <button class="google" type="button" onclick="signIn()">SIGN IN</button>
       <button class="close" type="button" onclick="closeModal('profile');TruckerAuth.show('signup')">CREATE ACCOUNT</button>
