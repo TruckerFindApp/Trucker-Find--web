@@ -130,6 +130,7 @@ function $(id){return document.getElementById(id);}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function openProfile(){
+  if(!currentUser){signIn();return;}
   const el=$('profile');
   if(el){el.style.display='flex';refreshProfileUI();}
 }
@@ -273,6 +274,7 @@ function refreshProfileUI(){
 function refreshProfileModal(){
   const sheet=document.querySelector('#profile .sheet');
   if(!sheet)return;
+  if(!currentUser){sheet.innerHTML='';return;}
 
   sheet.innerHTML=`
     <h2>Driver Profile</h2>
